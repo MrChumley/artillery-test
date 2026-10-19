@@ -190,35 +190,236 @@ function themeCompose(ctx,dest,t0){
   return 5.4;
 }
 /*ENDTHEME*/
+/*SCORE*/
+/* SCORE: full background music. E minor, 120 bpm (8th=0.25s). Self-contained, WebAudio only.
+ Step k (k=0..6), n=FIB[k] chorus repeats. Offsets from step start:
+   THEME   0.0  - 4.5   (final hit at 4.5, rings ~0.9s, faded 4.75-5.1)
+   FILL    4.5  - 6.0   (bass pedal from 4.75, kicks/snare roll; part of FIRST repeat only)
+   HOOK r  6.0+4r       (r=0..n-1, period 4.0s, 2 bars; repeats r>=1 start straight on the downbeat)
+   FINAL   6.0+4n       (chorus final E hit, ducked to .45 -> 0 over .45s; coincides with STOMP downbeat)
+   STOMP   6.0+4n  - 10.5+4n  (3 x 1.5s; ends mid-rise, next downbeat open)
+ step duration = 10.5+4n ; next step THEME starts exactly there (also after step 7 -> loop to step 1).
+*/
+var SCORE_FIB=[1,1,2,3,5,8,13];
+function _scNoise(ctx,seed){ctx._scN=ctx._scN||{};if(!ctx._scN[seed]){const nb=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate),a=nb.getChannelData(0);let s=seed;for(let i=0;i<a.length;i++){s=(s*16807)%2147483647;a[i]=s/1073741823-1;}ctx._scN[seed]=nb;}return ctx._scN[seed];}
+/*THEME*/
+function _scTheme(ctx,dest,t0){
+  const m=n=>440*Math.pow(2,(n-69)/12), E=0.25, nodes=[];
+  function osc(type,f,t,d,g,det,vib,fEnd){
+    const o=ctx.createOscillator(),v=ctx.createGain();o.type=type;o.frequency.setValueAtTime(f,t);
+    if(fEnd)o.frequency.exponentialRampToValueAtTime(fEnd,t+d);
+    o.detune.value=det||0;
+    if(vib){const l=ctx.createOscillator(),lg=ctx.createGain();l.frequency.value=6;lg.gain.value=vib;l.connect(lg);lg.connect(o.detune);l.start(t);l.stop(t+d+.05);}
+    v.gain.setValueAtTime(0,t);v.gain.linearRampToValueAtTime(g,t+.01);v.gain.setTargetAtTime(g*.6,t+.02,d*.5);v.gain.linearRampToValueAtTime(0,t+d);
+    o.connect(v);v.connect(dest);o.start(t);o.stop(t+d+.05);return o;}
+  function brass(n,t,d,g){[-12,0,12].forEach(c=>osc('sawtooth',m(n),t,d,g/3,c));}
+  function kick(t,g){osc('sine',150,t,.28,g,0,0,40);}
+  function noise(t,d,g,hp){const nb=_scNoise(ctx,1);
+    const s=ctx.createBufferSource(),f=ctx.createBiquadFilter(),v=ctx.createGain();s.buffer=nb;f.type='highpass';f.frequency.value=hp||1500;
+    v.gain.setValueAtTime(g,t);v.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(f);f.connect(v);v.connect(dest);s.start(t);s.stop(t+d+.02);}
+  const T=x=>t0+x;
+  // --- Godzilla section 0-1.5s: low ostinato (E minor), stomps, rising tritone stab
+  const gz=[[0,28,.2],[.25,28,.2],[.5,28,.12],[.625,29,.12],[.75,28,.2],[1,28,.12],[1.125,29,.12],[1.25,28,.2]];
+  gz.forEach(([x,n,d])=>{brass(n+12,T(x),d,.5);osc('square',m(n),T(x),d,.35);});
+  [0,.5,1].forEach(x=>{kick(T(x),1);noise(T(x),.25,.12,200);});
+  osc('sine',m(24),T(0),1.4,.5,0,0);
+  [[1.25,52],[1.25,58]].forEach(([x,n])=>brass(n,T(x),.25,.6)); // E3 + Bb3 tritone stab
+  osc('sawtooth',m(64),T(1.25),.25,.12,0,0,m(70)); // rising slide
+  // --- Heroic riff 1.5-4.5s
+  const b0=1.5,bass=[40,40,43,40,45,45,47,45, 40,40,43,40,48,47,45,43, 40,40,43,45];
+  bass.forEach((n,i)=>{ if(b0+i*E<4.5){osc('sawtooth',m(n),T(b0+i*E),E*.9,.34);osc('square',m(n-12),T(b0+i*E),E*.9,.25);} });
+  const lead=[[0,71,1],[1,71,.5],[1.5,76,.5],[2,74,1],[3,71,.5],[3.5,67,.5],
+              [4,76,1],[5,76,.5],[5.5,79,.5],[6,78,1],[7,76,.5],[7.5,74,.5],
+              [8,79,1],[9,81,1],[10,83,1],[11,86,.5]];
+  lead.forEach(([e,n,d])=>{const t=b0+e*E;osc('sawtooth',m(n),T(t),d*E*.95,.2,-6,14);osc('square',m(n),T(t),d*E*.95,.1,7,14);
+     if(e>=8)osc('sawtooth',m(n-12),T(t),d*E*.95,.15,0,0);});
+  for(let i=0;i<12;i++){const t=b0+i*E;if(t>=4.5)break;if(i%2===0)kick(T(t),.9);else{noise(T(t),.14,.45,1800);osc('triangle',190,T(t),.08,.3,0,0,120);}
+    if(i%2===0&&i>0)noise(T(t+E/2),.04,.12,6000);}
+  // --- Final hit 4.5s with decay
+  const F=4.5;kick(T(F),1.2);noise(T(F),.8,.5,600);
+  [40,52,59,64,71].forEach(n=>{osc('sawtooth',m(n),T(F),.9,.3,-8,0);osc('sawtooth',m(n),T(F),.9,.2,8,0);});
+  osc('sine',m(28),T(F),.9,.7,0,0);
+  return 5.4;
+}
+/*ENDTHEME*/
+function _scFill(ctx,dest,t0){ /* t0 = step start; sounds 4.75..6.0 */
+  const m=n=>440*Math.pow(2,(n-69)/12),E=.25;
+  function osc(type,f,t,d,g,fEnd){const o=ctx.createOscillator(),v=ctx.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(fEnd)o.frequency.exponentialRampToValueAtTime(fEnd,t+d);
+    v.gain.setValueAtTime(0,t);v.gain.linearRampToValueAtTime(g,t+.01);v.gain.linearRampToValueAtTime(0,t+d);o.connect(v);v.connect(dest);o.start(t);o.stop(t+d+.05);}
+  const nb=_scNoise(ctx,7);
+  function noise(t,d,g,hp){const x=ctx.createBufferSource(),f=ctx.createBiquadFilter(),v=ctx.createGain();x.buffer=nb;f.type='highpass';f.frequency.value=hp;v.gain.setValueAtTime(g,t);v.gain.exponentialRampToValueAtTime(.001,t+d);x.connect(f);f.connect(v);v.connect(dest);x.start(t);x.stop(t+d+.02);}
+  const T=x=>t0+x;
+  [5.0,5.5].forEach(t=>osc('sine',150,T(t),.28,.9,40));
+  for(let t=4.75;t<5.75;t+=E){osc('sawtooth',m(40),T(t),E*.9,.34);osc('square',m(28),T(t),E*.9,.25);}
+  osc('sawtooth',m(40),T(5.75),.25,.35,m(52));
+  for(let t=5.0;t<5.5;t+=.25)noise(T(t),.1,.25+(t-5)*.4,1800);
+  for(let t=5.5;t<6.0;t+=.125)noise(T(t),.08,.4+(t-5.5)*1.4,1800);
+  noise(T(5.875),.12,.9,1800);
+}
+/* 2-bar hook (4.0s). rep = repeat index. Subtle variation (hook itself identical, only extras added):
+   rep>=1: extra 16th off-hats; rep%4>=2: +octave bass; rep%4==3: extra snare ghost pickups. */
+function _scHook(ctx,dest,t0,rep){
+  rep=rep||0;
+  const m=n=>440*Math.pow(2,(n-69)/12), E=0.25;
+  function osc(type,f,t,d,g,det,vib,fEnd){
+    const o=ctx.createOscillator(),v=ctx.createGain();o.type=type;o.frequency.setValueAtTime(f,t);
+    if(fEnd)o.frequency.exponentialRampToValueAtTime(fEnd,t+d);
+    o.detune.value=det||0;
+    if(vib){const l=ctx.createOscillator(),lg=ctx.createGain();l.frequency.value=6;lg.gain.value=vib;l.connect(lg);lg.connect(o.detune);l.start(t);l.stop(t+d+.05);}
+    v.gain.setValueAtTime(0,t);v.gain.linearRampToValueAtTime(g,t+.01);v.gain.setTargetAtTime(g*.6,t+.02,d*.5);v.gain.linearRampToValueAtTime(0,t+d);
+    o.connect(v);v.connect(dest);o.start(t);o.stop(t+d+.05);return o;}
+  function kick(t,g){osc('sine',150,t,.28,g,0,0,40);}
+  const nb=_scNoise(ctx,1);
+  function noise(t,d,g,hp){
+    const s=ctx.createBufferSource(),f=ctx.createBiquadFilter(),v=ctx.createGain();s.buffer=nb;f.type='highpass';f.frequency.value=hp||1500;
+    v.gain.setValueAtTime(g,t);v.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(f);f.connect(v);v.connect(dest);s.start(t);s.stop(t+d+.02);}
+  const T=x=>t0+x, BAR=8*E, q=rep%4;
+  const lead=[[0,76,1],[1,76,1],[2,79,1],[3,76,1],[4,81,2],[6,79,1],[7,76,1]];
+  const bass=[40,40,40,40,40,40,38,38];
+  for(let b=0;b<2;b++){
+    const o=b*BAR;
+    bass.forEach((n,i)=>{const t=o+i*E;osc('sawtooth',m(n),T(t),E*.9,.34);osc('square',m(n-12),T(t),E*.9,.25);
+      if(rep>=1&&q>=2)osc('sawtooth',m(n+12),T(t),E*.9,.12);});
+    lead.forEach(([e,n,d])=>{const t=o+e*E;osc('sawtooth',m(n),T(t),d*E*.95,.2,-6,14);osc('square',m(n),T(t),d*E*.95,.1,7,14);
+      if(b===1)osc('sawtooth',m(n-12),T(t),d*E*.95,.15,0,0);});
+    for(let i=0;i<8;i++){const t=o+i*E;
+      if(i%2===0)kick(T(t),.9);
+      if(i===2||i===6){noise(T(t),.14,.45,1800);osc('triangle',190,T(t),.08,.3,0,0,120);}
+      if(i%2===1)noise(T(t),.04,.12,6000);
+      if(rep>=1&&i%2===0)noise(T(t+E/2),.03,.07,7000);}
+    if(q===3){noise(T(o+7*E+E/2),.05,.2,1800);noise(T(o+3*E+E/2),.05,.15,1800);}
+  }
+  return 4.0;
+}
+function _scFinal(ctx,dest,t0){ /* chorus final E hit at t0 (= stomp downbeat), ducked so stomp stays clear */
+  const m=n=>440*Math.pow(2,(n-69)/12);
+  const dg=ctx.createGain();dg.gain.setValueAtTime(1,t0);dg.gain.linearRampToValueAtTime(.45,t0+.1);dg.gain.linearRampToValueAtTime(0,t0+.55);dg.connect(dest);
+  function osc(type,f,t,d,g,det){const o=ctx.createOscillator(),v=ctx.createGain();o.type=type;o.frequency.setValueAtTime(f,t);o.detune.value=det||0;
+    v.gain.setValueAtTime(0,t);v.gain.linearRampToValueAtTime(g,t+.01);v.gain.setTargetAtTime(g*.6,t+.02,d*.5);v.gain.linearRampToValueAtTime(0,t+d);o.connect(v);v.connect(dg);o.start(t);o.stop(t+d+.05);}
+  const nb=_scNoise(ctx,1);
+  {const o=ctx.createOscillator(),v=ctx.createGain();o.type='sine';o.frequency.setValueAtTime(150,t0);o.frequency.exponentialRampToValueAtTime(40,t0+.28);v.gain.setValueAtTime(0,t0);v.gain.linearRampToValueAtTime(1.2,t0+.01);v.gain.setTargetAtTime(.72,t0+.02,.14);v.gain.linearRampToValueAtTime(0,t0+.28);o.connect(v);v.connect(dg);o.start(t0);o.stop(t0+.33);}
+  {const s=ctx.createBufferSource(),f=ctx.createBiquadFilter(),v=ctx.createGain();s.buffer=nb;f.type='highpass';f.frequency.value=600;v.gain.setValueAtTime(.5,t0);v.gain.exponentialRampToValueAtTime(.001,t0+.8);s.connect(f);f.connect(v);v.connect(dg);s.start(t0);s.stop(t0+.82);}
+  [40,52,59,64,71].forEach(n=>{osc('sawtooth',m(n),t0,.9,.3,-8);osc('sawtooth',m(n),t0,.9,.2,8);});
+  osc('sine',m(28),t0,.9,.7,0);
+}
+/*STOMP: E minor, 120bpm, 3 reps x 1.5s = 4.5s. Starts on a downbeat; ends on a rising slide resolving into a downbeat at t0+4.5 (returns 4.5).*/
+function _scStomp(ctx,dest,t0){
+  const m=n=>440*Math.pow(2,(n-69)/12);
+  function osc(type,f,t,d,g,det,fEnd){
+    const o=ctx.createOscillator(),v=ctx.createGain();o.type=type;o.frequency.setValueAtTime(f,t);
+    if(fEnd)o.frequency.exponentialRampToValueAtTime(fEnd,t+d);o.detune.value=det||0;
+    v.gain.setValueAtTime(0,t);v.gain.linearRampToValueAtTime(g,t+.01);v.gain.setTargetAtTime(g*.6,t+.02,d*.5);v.gain.linearRampToValueAtTime(0,t+d);
+    o.connect(v);v.connect(dest);o.start(t);o.stop(t+d+.05);}
+  function brass(n,t,d,g){[-12,0,12].forEach(c=>osc('sawtooth',m(n),t,d,g/3,c));}
+  function kick(t,g){osc('sine',150,t,.28,g,0,40);}
+  const nb=_scNoise(ctx,3);
+  function noise(t,d,g,hp){const x=ctx.createBufferSource(),f=ctx.createBiquadFilter(),v=ctx.createGain();x.buffer=nb;f.type='highpass';f.frequency.value=hp;
+    v.gain.setValueAtTime(g,t);v.gain.exponentialRampToValueAtTime(.001,t+d);x.connect(f);f.connect(v);v.connect(dest);x.start(t);x.stop(t+d+.02);}
+  const gz=[[0,28,.2],[.25,28,.2],[.5,28,.12],[.625,29,.12],[.75,28,.2],[1,28,.12],[1.125,29,.12],[1.25,28,.25]];
+  for(let r=0;r<3;r++){
+    const o=r*1.5,T=x=>t0+o+x,last=r===2;
+    gz.forEach(([x,n,d])=>{
+      if(last&&x===1.25)return; // replaced by stab
+      brass(n+12,T(x),d,r===0?.45:.5);osc('square',m(n),T(x),d,.35);
+      if(r>=1)brass(n+24,T(x),d,.3);            // rep2+: higher octave brass
+      if(last)brass(n+19,T(x),d,.15);           // rep3: fifth for weight
+    });
+    [0,.5,1].forEach(x=>{kick(T(x),1);noise(T(x),.25,.12,200);osc('sine',m(24),T(x),.4,.45);}); // kick + low boom
+    if(r===0){osc('sine',m(24),T(0),1.5,.3);}else osc('sine',m(24),T(0),1.5,.45);
+    if(r>=1)for(let i=0;i<6;i++)noise(T(i*.25+.125),.04,.12,6000); // hats
+    if(last){[.5,1].forEach(x=>{noise(T(x),.14,.45,1800);osc('triangle',190,T(x),.08,.3,0,120);}); // snare accents
+      [1.25,1.375].forEach(x=>noise(T(x),.1,.3+(x-1.25)*2,1800));for(let x=1.25;x<1.5;x+=.0625)noise(T(x),.05,.3+(x-1.25)*2.4,2500);
+      [52,58].forEach(n=>brass(n,T(1.25),.25,.6)); // E3+Bb3 tritone stab
+      osc('sawtooth',m(40),T(1.25),.25,.35,0,m(52)); // rising bass slide E2->E3 into downbeat
+      osc('sawtooth',m(64),T(1.25),.25,.18,0,m(76));} // rising lead slide E4->E5
+  }
+  return 4.5;
+}
+/*ENDSTOMP*/
+/* ---- segment model: a step is a list of segments {name,rep,start (offset from step start),dur,play(ctx,dest,stepT0)} ---- */
+function scoreStepDuration(i){return 10.5+4*SCORE_FIB[i];}
+function scoreSegments(i){
+  const n=SCORE_FIB[i],S=[];
+  S.push({name:'theme',start:0,dur:4.5,play:(c,d,t)=>{const g=c.createGain();g.gain.setValueAtTime(1,t+4.75);g.gain.linearRampToValueAtTime(0,t+5.1);g.connect(d);_scTheme(c,g,t);}});
+  S.push({name:'fill',start:4.5,dur:1.5,play:(c,d,t)=>_scFill(c,d,t)});
+  for(let r=0;r<n;r++)S.push({name:'hook',rep:r,start:6+4*r,dur:4,play:(c,d,t)=>_scHook(c,d,t+6+4*r,r)});
+  S.push({name:'final+stomp',start:6+4*n,dur:4.5,play:(c,d,t)=>{_scFinal(c,d,t+6+4*n);_scStomp(c,d,t+6+4*n);}});
+  return S;
+}
+/* schedule one whole step (many nodes at once: ok offline; at runtime prefer ScoreRunner). returns step duration */
+function scoreStep(ctx,dest,t0,i){scoreSegments(i).forEach(s=>s.play(ctx,dest,t0));return scoreStepDuration(i);}
+/* whole score once; opts.loops (default 1) repeats the whole cycle; returns total duration */
+function scoreCompose(ctx,dest,t0,opts){opts=opts||{};let t=t0;for(let L=0;L<(opts.loops||1);L++)for(let i=0;i<7;i++)t+=scoreStep(ctx,dest,t,i);return t-t0;}
+function scoreTotal(){let s=0;for(let i=0;i<7;i++)s+=scoreStepDuration(i);return s;}
+/* Runtime scheduler: ScoreRunner(ctx,out,{lookahead:3,interval:.25,onSeg}) .start() .stop(fade=.4)
+   Segments (<=~340 nodes each, see report) are scheduled only when their start is < ctx.currentTime+lookahead.
+   Loops forever (7 steps then step 1). stop(): ramps master gain to 0, clears timer, then disconnects. */
+function ScoreRunner(ctx,out,o){
+  o=o||{};const LA=o.lookahead||3,IV=(o.interval||.25)*1000;
+  const master=ctx.createGain();master.gain.value=1;master.connect(out);
+  let timer=null,step=0,queue=[],stepT0=0,running=false,cur=0;
+  function fill(){if(!queue.length){cur=step;queue=scoreSegments(step).map(s=>({s,t:stepT0}));stepT0+=scoreStepDuration(step);step=(step+1)%7;}}
+  const R={master,get running(){return running;},get stepIndex(){return cur;},
+    tick(now){ /* schedule everything starting before now+LA; exposed for tests */
+      if(!running||ctx.state==='suspended'||ctx.state==='interrupted')return; /* wait for resume: never queue a burst */
+      for(;;){fill();const q=queue[0],at=q.t+q.s.start;if(at>now+LA)break;queue.shift();if(at<now-.5)continue; /* stale (late timer): drop, don't burst */ q.s.play(ctx,master,q.t);if(o.onSeg)o.onSeg(q.s.name,at);}},
+    start(startStep){if(running)return;running=true;step=startStep||0;queue=[];stepT0=ctx.currentTime+.1;master.gain.cancelScheduledValues(ctx.currentTime);master.gain.setValueAtTime(1,ctx.currentTime);R.tick(ctx.currentTime);timer=setInterval(()=>R.tick(ctx.currentTime),IV);},
+    stop(fade){fade=fade==null?.4:fade;if(!running)return;running=false;clearInterval(timer);const t=ctx.currentTime;master.gain.cancelScheduledValues(t);master.gain.setValueAtTime(master.gain.value,t);master.gain.linearRampToValueAtTime(0,t+fade);setTimeout(()=>{try{master.disconnect()}catch(e){}},fade*1000+300);}
+  };
+  return R;
+}
+
+/*ENDSCORE*/
 /*THEMEHOOK*/
 (function(){
-  var sp=document.getElementById('splash'),mc=null,mg=null,played=false,tm=0,busyUntil=0,lastNet=-1e9,COOL=6500;
+  var sp=document.getElementById('splash'),mc=null,mg=null,tm=0,busyUntil=0,lastNet=-1e9,COOL=6500;
+  var MUSIC_GAIN=.025,on=true,runner=null,bus=null,busCtx=null,wantStep=0,hiddenPaused=false,starting=false,lastArt=-1e9;
   function now(){return (window.performance&&performance.now)?performance.now():Date.now();}
   function shown(){return sp&&!sp.classList.contains('hidden');}
   function busy(){return now()<busyUntil;}
-  function stop(){played=true;clearTimeout(tm);if(mg&&mc){try{var t=mc.currentTime;mg.gain.cancelScheduledValues(t);mg.gain.setValueAtTime(mg.gain.value,t);mg.gain.linearRampToValueAtTime(0,t+.15);}catch(e){}var g=mg;setTimeout(function(){try{g.disconnect();}catch(e){}},400);mg=null;busyUntil=0;}}
+  /* ---- background music (score): own compressor + master gain, own nodes (never goes through the sfx guards) ---- */
+  function getBus(c){
+    if(bus&&busCtx===c)return bus;
+    var comp=c.createDynamicsCompressor();comp.threshold.value=-18;comp.ratio.value=6;comp.connect(c.destination);
+    var g=c.createGain();g.gain.value=MUSIC_GAIN;g.connect(comp);bus=g;busCtx=c;return g;
+  }
+  function playing(){return !!(runner&&runner.running);}
+  function musicStart(step){
+    if(!on||playing()||document.hidden)return;
+    var c;try{c=audio();}catch(e){return;} if(!c)return;
+    function ok(){starting=false;if(!on||playing()||document.hidden||c.state!=='running')return;
+      try{runner=ScoreRunner(c,getBus(c),{});runner.start(step||0);}catch(e){runner=null;}}
+    if(c.state==='running'){ok();return;}
+    starting=true;try{var pr=c.resume();if(pr&&pr.then)pr.then(ok,function(){starting=false;});else starting=false;}catch(e){starting=false;}
+  }
+  function musicStop(fade){if(runner){var r=runner;runner=null;try{r.stop(fade==null?.3:fade);}catch(e){}}}
+  function toggle(){
+    on=!on;
+    if(on){wantStep=0;musicStart(0);}else{hiddenPaused=false;musicStop(.3);}
+  }
+  /* pause the scheduler while the tab is hidden, resume (same step, restarted) on return */
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden){if(playing()){wantStep=runner.stepIndex;hiddenPaused=true;musicStop(.1);}}
+    else if(hiddenPaused){hiddenPaused=false;if(on)musicStart(wantStep);}
+  });
+  /* duck the music while the 'theme' cheat theme plays (audio-clock automation, restores itself) */
+  function duckMusic(c,len){
+    if(!bus||busCtx!==c)return;var t=c.currentTime,g=bus.gain;
+    try{g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);g.linearRampToValueAtTime(0,t+.08);g.setValueAtTime(0,t+len);g.linearRampToValueAtTime(MUSIC_GAIN,t+len+.4);}catch(e){}
+  }
+  /* ---- cheat/net theme (unchanged behaviour, plus music duck) ---- */
   function begin(c){
     if(busy()&&mg)return false;
     mc=c;var comp=c.createDynamicsCompressor();comp.threshold.value=-18;comp.ratio.value=6;
     var g=c.createGain();g.gain.value=.25;g.connect(comp);comp.connect(c.destination);mg=g;
     themeCompose(c,g,c.currentTime+.05);
+    duckMusic(c,5.7);
     busyUntil=now()+COOL;
     clearTimeout(tm);tm=setTimeout(function(){try{g.disconnect();}catch(e){}if(mg===g)mg=null;},6200);
     return true;
   }
-  function go(){
-    if(played||!shown()||busy())return;
-    var c;try{c=audio();}catch(e){return;} if(!c)return;
-    if(c.state!=='running'){try{var pr=c.resume();if(pr&&pr.then)pr.then(function(){if(c.state==='running')go();},function(){});}catch(e){}return;}
-    played=true;begin(c);
-  }
-  /* start-screen artwork tap: replay, ignored while playing / cooling down */
-  function replay(){
-    if(!shown()||busy())return;
-    var c;try{c=audio();}catch(e){return;} if(!c)return;
-    function ok(){if(shown()&&!busy()&&c.state==='running'){played=true;begin(c);}}
-    if(c.state==='running')ok();else{try{var pr=c.resume();if(pr&&pr.then)pr.then(ok,function(){});}catch(e){}}
-  }
+  function go(){musicStart(wantStep);}
+  /* start-screen artwork tap: toggle music on/off (first gesture while blocked just starts it) */
   var art=sp&&sp.querySelector('svg');
   function onArt(e){
     if(!art||typeof e.clientX!=='number')return false;
@@ -226,18 +427,19 @@ function themeCompose(ctx,dest,t0){
     var g=art.querySelector('g')||art,r=g.getBoundingClientRect();
     return e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;
   }
-  var lastTap=-1e9;
+  function artTap(){
+    var t=now();if(t-lastArt<350)return;lastArt=t;
+    if(on&&!playing()){musicStart(wantStep);}else toggle();
+    if(art){art.style.opacity=on?'':'.55';}
+  }
   ['pointerdown','touchend','click','keydown'].forEach(function(ev){document.addEventListener(ev,function(e){
-    if(!shown())return;
-    if(e.target&&e.target.id==='startBtn')return;
-    if(ev==='pointerdown'&&onArt(e)){replay();if(art){art.style.opacity='.55';setTimeout(function(){art.style.opacity='';},160);}return;}
-    if(ev==='click'||ev==='touchend'){ if(onArt(e)){replay();return;} }
+    if(shown()&&ev!=='keydown'&&onArt(e)){ if(ev==='pointerdown'||(ev!=='pointerdown'&&now()-lastArt>=350&&!window.PointerEvent))artTap(); return; }
+    if(e.target&&e.target.id==='startBtn'){go();return;}
     go();},true);});
   if(sp)sp.addEventListener('mousemove',function(e){sp.style.cursor=onArt(e)?'pointer':'';});
   if(art)art.style.transition='opacity .15s';
-  if(window.MutationObserver&&sp)new MutationObserver(function(){if(shown()){if(!mg)played=false;}else stop();}).observe(sp,{attributes:true,attributeFilter:['class']});
-  document.getElementById('startBtn').addEventListener('pointerdown',stop,true);
-  setTimeout(go,300); // autoplay attempt; no-op if context suspended
+  setTimeout(go,300); // autoplay attempt; waits (no burst) if the context is suspended
+  window.__music={state:function(){return {on:on,playing:playing(),step:runner?runner.stepIndex:-1};},toggle:artTap,runner:function(){return runner;},bus:function(){return bus;}};
   window.__themeGo=go;
   /* in-game theme: cheat 'theme' (local, user gesture) */
   window.__themeCheat=function(){
@@ -262,5 +464,5 @@ function themeCompose(ctx,dest,t0){
   };
 })();
 /*ENDHOOK*/
-</script><!-- build theme3 -->
+</script><!-- build score1 -->
 </body></html>
