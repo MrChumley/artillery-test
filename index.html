@@ -402,22 +402,6 @@ function ScoreRunner(ctx,out,o){
     if(document.hidden){if(playing()){wantStep=runner.stepIndex;hiddenPaused=true;musicStop(.1);}}
     else if(hiddenPaused){hiddenPaused=false;if(on)musicStart(wantStep);}
   });
-  /* duck the music while the 'theme' cheat theme plays (audio-clock automation, restores itself) */
-  function duckMusic(c,len){
-    if(!bus||busCtx!==c)return;var t=c.currentTime,g=bus.gain;
-    try{g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);g.linearRampToValueAtTime(0,t+.08);g.setValueAtTime(0,t+len);g.linearRampToValueAtTime(MUSIC_GAIN,t+len+.4);}catch(e){}
-  }
-  /* ---- cheat/net theme (unchanged behaviour, plus music duck) ---- */
-  function begin(c){
-    if(busy()&&mg)return false;
-    mc=c;var comp=c.createDynamicsCompressor();comp.threshold.value=-18;comp.ratio.value=6;
-    var g=c.createGain();g.gain.value=.25;g.connect(comp);comp.connect(c.destination);mg=g;
-    themeCompose(c,g,c.currentTime+.05);
-    duckMusic(c,5.7);
-    busyUntil=now()+COOL;
-    clearTimeout(tm);tm=setTimeout(function(){try{g.disconnect();}catch(e){}if(mg===g)mg=null;},6200);
-    return true;
-  }
   function go(){musicStart(wantStep);}
   /* start-screen artwork tap: toggle music on/off (first gesture while blocked just starts it) */
   var art=sp&&sp.querySelector('svg');
@@ -427,13 +411,36 @@ function ScoreRunner(ctx,out,o){
     var g=art.querySelector('g')||art,r=g.getBoundingClientRect();
     return e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;
   }
+  /* single source of truth: on. UI (art dim + in-game speaker) always reflects it */
+  var sb=document.createElement('button');sb.type='button';sb.id='muteBtn';sb.setAttribute('aria-label','music');
+  sb.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9z" fill="currentColor" stroke-width="1.2"/><g id="muteArcs"><path class="arc" d="M15 9.5a3.5 3.5 0 0 1 0 5"/><path class="arc" d="M17.5 7a7 7 0 0 1 0 10"/><path class="arc" d="M20 4.5a10.5 10.5 0 0 1 0 15"/></g></svg>';
+  var st=document.createElement('style');st.textContent='#muteBtn{position:fixed;z-index:5;width:44px;height:44px;padding:0;margin:0;border:0;background:transparent;color:#4f4;display:none;align-items:center;justify-content:center;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;cursor:pointer;opacity:.8;outline:none;min-height:0;min-width:0}#muteBtn svg{width:22px;height:22px;display:block;pointer-events:none}#muteBtn.off{color:#3a3;opacity:.55}#muteBtn.off .arc{display:none}';
+  document.head.appendChild(st);document.body.appendChild(sb);
+  var cv=document.getElementById('c');
+  function placeBtn(){
+    var vis=!shown();sb.style.display=vis?'flex':'none';if(!vis||!cv)return;
+    var r=cv.getBoundingClientRect();sb.style.left=Math.max(0,r.right-46)+'px';sb.style.top=Math.max(0,r.top+2)+'px';
+  }
+  function ui(){
+    if(art)art.style.opacity=on?'':'.55';
+    sb.classList.toggle('off',!on);sb.setAttribute('aria-pressed',on?'true':'false');
+    var n=sb.querySelectorAll('.arc').length; /* arcs removed from view when off (css display:none) */
+  }
+  var lastTog=-1e9;
+  function userToggle(){var t=now();if(t-lastTog<250)return false;lastTog=t;toggle();ui();return true;}
   function artTap(){
     var t=now();if(t-lastArt<350)return;lastArt=t;
-    if(on&&!playing()){musicStart(wantStep);}else toggle();
-    if(art){art.style.opacity=on?'':'.55';}
+    if(on&&!playing()){musicStart(wantStep);}else{lastTog=t;toggle();}
+    ui();
   }
+  sb.addEventListener('click',function(e){e.stopPropagation();if(on&&!playing()&&!document.hidden&&!starting){musicStart(wantStep);return;}userToggle();});
+  ['pointerdown','touchstart','touchend','mousedown'].forEach(function(ev){sb.addEventListener(ev,function(e){e.stopPropagation();},false);});
+  new MutationObserver(placeBtn).observe(sp,{attributes:true,attributeFilter:['class']});
+  window.addEventListener('resize',placeBtn);window.addEventListener('orientationchange',placeBtn);
+  if(window.ResizeObserver&&cv)new ResizeObserver(placeBtn).observe(cv);
+  placeBtn();
   ['pointerdown','touchend','click','keydown'].forEach(function(ev){document.addEventListener(ev,function(e){
-    if(shown()&&ev!=='keydown'&&onArt(e)){ if(ev==='pointerdown'||(ev!=='pointerdown'&&now()-lastArt>=350&&!window.PointerEvent))artTap(); return; }
+    if(shown()&&ev!=='keydown'&&onArt(e)){ if(ev==='pointerdown'||(!window.PointerEvent&&ev==='click'&&now()-lastArt>=350))artTap(); else go(); return; }
     if(e.target&&e.target.id==='startBtn'){go();return;}
     go();},true);});
   if(sp)sp.addEventListener('mousemove',function(e){sp.style.cursor=onArt(e)?'pointer':'';});
@@ -441,28 +448,16 @@ function ScoreRunner(ctx,out,o){
   setTimeout(go,300); // autoplay attempt; waits (no burst) if the context is suspended
   window.__music={state:function(){return {on:on,playing:playing(),step:runner?runner.stepIndex:-1};},toggle:artTap,runner:function(){return runner;},bus:function(){return bus;}};
   window.__themeGo=go;
-  /* in-game theme: cheat 'theme' (local, user gesture) */
+  /* cheat 'theme': toggles the background music (local only, shared state) */
   window.__themeCheat=function(){
     if(shown())return 'start';
-    if(busy()){ if(typeof msg!=='undefined')msg.textContent='theme cooling down'; return 'cool'; }
-    var c;try{c=audio();}catch(e){return 'noaudio';} if(!c)return 'noaudio';
-    busyUntil=now()+COOL; /* reserve so rapid repeats are blocked */
-    if(c.state==='running')begin2(c);else{try{var pr=c.resume();if(pr&&pr.then)pr.then(function(){if(c.state==='running')begin2(c);},function(){});}catch(e){}}
-    try{ if(typeof send==='function')send({type:'theme'}); }catch(e){}
-    return 'ok';
+    if(!userToggle()){return 'cool';}
+    try{if(typeof msg!=='undefined')msg.textContent=on?'music on':'music off';}catch(e){}
+    return on?'on':'off';
   };
-  function begin2(c){var keep=busyUntil;mg=null;begin(c);busyUntil=Math.max(keep,busyUntil);}
-  /* in-game theme: received from opponent (not a user gesture, never queues) */
-  window.__themeNet=function(){
-    if(shown())return 'start';
-    var t=now(); if(t-lastNet<COOL)return 'rate'; lastNet=t;
-    if(busy())return 'busy';
-    var c;try{c=audio();}catch(e){return 'noaudio';} if(!c)return 'noaudio';
-    if(c.state==='running'){busyUntil=now()+COOL;begin2(c);return 'ok';}
-    try{var pr=c.resume();if(pr&&pr.then)pr.then(function(){if(c.state==='running'&&now()-t<1500&&!busy()&&!shown()){busyUntil=now()+COOL;begin2(c);}},function(){});}catch(e){}
-    return 'wait';
-  };
+  /* incoming {type:'theme'} from older clients: ignored silently */
+  window.__themeNet=function(){return 'ignored';};
 })();
 /*ENDHOOK*/
-</script><!-- build score1 -->
+</script><!-- build mute1 -->
 </body></html>
