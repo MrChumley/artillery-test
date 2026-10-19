@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="ARTILLERY"><meta name="twitter:description" content="2-player tank duel. Set angle and power, watch the wind, FIRE."><meta name="twitter:image" content="https://mrchumley.github.io/artillery-test/preview3.png"><meta property="og:title" content="ARTILLERY"><meta property="og:description" content="2-player tank duel. Set angle and power, watch the wind, FIRE."><meta property="og:image" content="https://mrchumley.github.io/artillery-test/preview3.png"><meta property="og:url" content="https://mrchumley.github.io/artillery-test/"><title>ARTILLERY (test)</title><!-- build pow1 --><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script><style>  html,body{margin:0;height:100%;height:100dvh;background:#000;color:#6f6;font-family:"Courier New",monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;box-sizing:border-box;padding:max(6px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));-webkit-text-size-adjust:100%;}  h1{font-size:18px;letter-spacing:6px;margin:6px 0;font-weight:normal;}  .cheat-bang{border:0;background:transparent;color:#6f6;padding:0;margin:0;font:inherit;letter-spacing:0;cursor:default;opacity:.55;}  .cheat-bang:focus{outline:none;}  canvas{width:min(100%,640px);height:auto;aspect-ratio:320/200;outline:2px solid #3a3;outline-offset:0;background:#000;box-shadow:0 0 24px #040;image-rendering:pixelated;image-rendering:crisp-edges;flex:0 0 auto;touch-action:none;display:block;margin:2px;}
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="ARTILLERY"><meta name="twitter:description" content="2-player tank duel. Set angle and power, watch the wind, FIRE."><meta name="twitter:image" content="https://mrchumley.github.io/artillery-test/preview3.png"><meta property="og:title" content="ARTILLERY"><meta property="og:description" content="2-player tank duel. Set angle and power, watch the wind, FIRE."><meta property="og:image" content="https://mrchumley.github.io/artillery-test/preview3.png"><meta property="og:url" content="https://mrchumley.github.io/artillery-test/"><title>ARTILLERY (test)</title><!-- build theme1 --><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script><style>  html,body{margin:0;height:100%;height:100dvh;background:#000;color:#6f6;font-family:"Courier New",monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;box-sizing:border-box;padding:max(6px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));-webkit-text-size-adjust:100%;}  h1{font-size:18px;letter-spacing:6px;margin:6px 0;font-weight:normal;}  .cheat-bang{border:0;background:transparent;color:#6f6;padding:0;margin:0;font:inherit;letter-spacing:0;cursor:default;opacity:.55;}  .cheat-bang:focus{outline:none;}  canvas{width:min(100%,640px);height:auto;aspect-ratio:320/200;outline:2px solid #3a3;outline-offset:0;background:#000;box-shadow:0 0 24px #040;image-rendering:pixelated;image-rendering:crisp-edges;flex:0 0 auto;touch-action:none;display:block;margin:2px;}
   .ui{display:flex;flex-direction:column;align-items:center;width:min(640px,100%);}  .row{margin:6px 0;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;}  input,select,button{background:#000;color:#6f6;border:1px solid #3a3;font-family:inherit;font-size:16px;padding:3px 6px;}  button{border-color:#6f6;cursor:pointer;} button:disabled{opacity:.4;cursor:default;}  input[type=number]{width:56px;} #room{width:140px;}  #msg,#net{min-height:18px;font-size:13px;text-align:center;} #net{opacity:.8;}  #wind{display:inline-block;min-width:4ch;text-align:right;font-variant-numeric:tabular-nums;}  .msgline{display:flex;align-items:baseline;justify-content:center;gap:0;}  .seed-dot{border:0;background:transparent;color:#6f6;padding:0;margin:0;font:inherit;font-size:13px;line-height:1;cursor:default;opacity:.7;}  .seed-dot:focus{outline:none;}  .step{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;}  .step input[type=number]{width:52px;text-align:center;font-size:16px;-moz-appearance:textfield;}  .step input[type=number]::-webkit-outer-spin-button,.step input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}  .nudge{width:52px;padding:4px 0;line-height:1;touch-action:manipulation;}  #splash,#flagpop{position:fixed;inset:0;z-index:5;background:#000;color:#6f6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;}  #flagpop{z-index:6;background:rgba(0,0,0,.94);}  #splash svg{position:absolute;right:0;bottom:0;width:50%;height:50%;pointer-events:none;}  #splash h1,#splash #startBtn{position:relative;z-index:1;}  #splash h1{font-size:28px;letter-spacing:8px;text-shadow:0 0 8px #000;}  #flagBtn{position:absolute;left:10px;bottom:10px;z-index:2;width:42px;height:42px;font-size:22px;padding:0;line-height:1;}  #splash.hidden,#flagpop.hidden{display:none;}  #flagbox{width:min(420px,92vw);max-height:86dvh;border:1px solid #3a3;padding:12px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;}  #qflag{width:100%;box-sizing:border-box;}  .seatline{display:flex;align-items:center;gap:8px;width:100%;text-align:left;}  .seatline.on{background:#032;}  #flaglist{flex:1 1 auto;min-height:160px;max-height:46dvh;overflow-y:scroll;-webkit-overflow-scrolling:touch;border:1px solid #3a3;}  #flaglist button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #163;background:#000;}  #flaglist button.on{background:#032;}
   /* ---- UI layout overrides ---- */
   body{gap:4px;}
@@ -149,4 +149,71 @@ if(window.visualViewport)visualViewport.addEventListener('resize',fit);
 if(window.ResizeObserver)new ResizeObserver(fit).observe(ui);
 fit();setTimeout(fit,150);setTimeout(fit,600);setTimeout(fit,1500);window.addEventListener('load',fit);window.addEventListener('pageshow',fit);var _sb=document.getElementById('startBtn');if(_sb)_sb.addEventListener('click',function(){setTimeout(fit,0);setTimeout(fit,300);});
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);
-})();</script></body></html>
+})();</script><script>/*THEME*/
+function themeCompose(ctx,dest,t0){
+  const m=n=>440*Math.pow(2,(n-69)/12), E=0.25, nodes=[];
+  function osc(type,f,t,d,g,det,vib,fEnd){
+    const o=ctx.createOscillator(),v=ctx.createGain();o.type=type;o.frequency.setValueAtTime(f,t);
+    if(fEnd)o.frequency.exponentialRampToValueAtTime(fEnd,t+d);
+    o.detune.value=det||0;
+    if(vib){const l=ctx.createOscillator(),lg=ctx.createGain();l.frequency.value=6;lg.gain.value=vib;l.connect(lg);lg.connect(o.detune);l.start(t);l.stop(t+d+.05);}
+    v.gain.setValueAtTime(0,t);v.gain.linearRampToValueAtTime(g,t+.01);v.gain.setTargetAtTime(g*.6,t+.02,d*.5);v.gain.linearRampToValueAtTime(0,t+d);
+    o.connect(v);v.connect(dest);o.start(t);o.stop(t+d+.05);return o;}
+  function brass(n,t,d,g){[-12,0,12].forEach(c=>osc('sawtooth',m(n),t,d,g/3,c));}
+  function kick(t,g){osc('sine',150,t,.28,g,0,0,40);}
+  let nb=null;function noise(t,d,g,hp){
+    if(!nb){nb=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);const a=nb.getChannelData(0);let s=1;for(let i=0;i<a.length;i++){s=(s*16807)%2147483647;a[i]=s/1073741823-1;}}
+    const s=ctx.createBufferSource(),f=ctx.createBiquadFilter(),v=ctx.createGain();s.buffer=nb;f.type='highpass';f.frequency.value=hp||1500;
+    v.gain.setValueAtTime(g,t);v.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(f);f.connect(v);v.connect(dest);s.start(t);s.stop(t+d+.02);}
+  const T=x=>t0+x;
+  // --- Godzilla section 0-1.5s: low ostinato (E minor), stomps, rising tritone stab
+  const gz=[[0,28,.2],[.25,28,.2],[.5,28,.12],[.625,29,.12],[.75,28,.2],[1,28,.12],[1.125,29,.12],[1.25,28,.2]];
+  gz.forEach(([x,n,d])=>{brass(n+12,T(x),d,.5);osc('square',m(n),T(x),d,.35);});
+  [0,.5,1].forEach(x=>{kick(T(x),1);noise(T(x),.25,.12,200);});
+  osc('sine',m(24),T(0),1.4,.5,0,0);
+  [[1.25,52],[1.25,58]].forEach(([x,n])=>brass(n,T(x),.25,.6)); // E3 + Bb3 tritone stab
+  osc('sawtooth',m(64),T(1.25),.25,.12,0,0,m(70)); // rising slide
+  // --- Heroic riff 1.5-4.5s
+  const b0=1.5,bass=[40,40,43,40,45,45,47,45, 40,40,43,40,48,47,45,43, 40,40,43,45];
+  bass.forEach((n,i)=>{ if(b0+i*E<4.5){osc('sawtooth',m(n),T(b0+i*E),E*.9,.34);osc('square',m(n-12),T(b0+i*E),E*.9,.25);} });
+  const lead=[[0,71,1],[1,71,.5],[1.5,76,.5],[2,74,1],[3,71,.5],[3.5,67,.5],
+              [4,76,1],[5,76,.5],[5.5,79,.5],[6,78,1],[7,76,.5],[7.5,74,.5],
+              [8,79,1],[9,81,1],[10,83,1],[11,86,.5]];
+  lead.forEach(([e,n,d])=>{const t=b0+e*E;osc('sawtooth',m(n),T(t),d*E*.95,.2,-6,14);osc('square',m(n),T(t),d*E*.95,.1,7,14);
+     if(e>=8)osc('sawtooth',m(n-12),T(t),d*E*.95,.15,0,0);});
+  for(let i=0;i<12;i++){const t=b0+i*E;if(t>=4.5)break;if(i%2===0)kick(T(t),.9);else{noise(T(t),.14,.45,1800);osc('triangle',190,T(t),.08,.3,0,0,120);}
+    if(i%2===0&&i>0)noise(T(t+E/2),.04,.12,6000);}
+  // --- Final hit 4.5s with decay
+  const F=4.5;kick(T(F),1.2);noise(T(F),.8,.5,600);
+  [40,52,59,64,71].forEach(n=>{osc('sawtooth',m(n),T(F),.9,.3,-8,0);osc('sawtooth',m(n),T(F),.9,.2,8,0);});
+  osc('sine',m(28),T(F),.9,.7,0,0);
+  return 5.4;
+}
+/*ENDTHEME*/
+/*THEMEHOOK*/
+(function(){
+  var sp=document.getElementById('splash'),mc=null,mg=null,played=false,live=false,tm=0;
+  function shown(){return sp&&!sp.classList.contains('hidden');}
+  function stop(){played=true;clearTimeout(tm);if(mg&&mc){try{var t=mc.currentTime;mg.gain.cancelScheduledValues(t);mg.gain.setValueAtTime(mg.gain.value,t);mg.gain.linearRampToValueAtTime(0,t+.15);}catch(e){}var g=mg;setTimeout(function(){try{g.disconnect();}catch(e){}},400);mg=null;}live=false;}
+  function go(){
+    if(played||!shown())return;
+    var c;try{c=audio();}catch(e){return;} if(!c)return;
+    if(c.state!=='running'){try{var pr=c.resume();if(pr&&pr.then)pr.then(function(){if(c.state==='running')go();},function(){});}catch(e){}return;}
+    played=true;live=true;mc=c;
+    var comp=c.createDynamicsCompressor();comp.threshold.value=-18;comp.ratio.value=6;
+    mg=c.createGain();mg.gain.value=.25;mg.connect(comp);comp.connect(c.destination);
+    themeCompose(c,mg,c.currentTime+.05);
+    tm=setTimeout(function(){live=false;},5600);
+  }
+  function arm(){played=false;}
+  ['pointerdown','touchend','click','keydown'].forEach(function(ev){document.addEventListener(ev,function(e){
+    if(!shown())return;
+    if(e.target&&e.target.id==='startBtn')return;
+    go();},true);});
+  if(window.MutationObserver&&sp)new MutationObserver(function(){if(shown()){if(!live)arm();}else stop();}).observe(sp,{attributes:true,attributeFilter:['class']});
+  document.getElementById('startBtn').addEventListener('pointerdown',stop,true);
+  setTimeout(go,300); // autoplay attempt; no-op if context suspended
+  window.__themeGo=go;
+})();
+/*ENDHOOK*/
+</script></body></html>
