@@ -1,4 +1,4 @@
-<!DOCTYPE html><!-- build wind3 --><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="ARTILLERY"><meta name="twitter:description" content="2-player tank duel. Set angle and power, watch the wind, FIRE."><meta name="twitter:image" content="https://mrchumley.github.io/artillery-test/preview3.png"><meta property="og:title" content="ARTILLERY"><meta property="og:description" content="2-player tank duel. Set angle and power, watch the wind, FIRE."><meta property="og:image" content="https://mrchumley.github.io/artillery-test/preview3.png"><meta property="og:url" content="https://mrchumley.github.io/artillery-test/"><title>ARTILLERY (test)</title><!-- build theme1 (superseded) --><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script><style>  html,body{margin:0;height:100%;height:100dvh;background:#000;color:#6f6;font-family:"Courier New",monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;box-sizing:border-box;padding:max(6px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));-webkit-text-size-adjust:100%;}  h1{font-size:18px;letter-spacing:6px;margin:6px 0;font-weight:normal;}  .cheat-bang{border:0;background:transparent;color:#6f6;padding:0;margin:0;font:inherit;letter-spacing:0;cursor:default;opacity:.55;}  .cheat-bang:focus{outline:none;}  canvas{width:min(100%,640px);height:auto;aspect-ratio:320/200;outline:2px solid #3a3;outline-offset:0;background:#000;box-shadow:0 0 24px #040;image-rendering:pixelated;image-rendering:crisp-edges;flex:0 0 auto;touch-action:none;display:block;margin:2px;}
+<!DOCTYPE html><!-- build audio3 --><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="ARTILLERY"><meta name="twitter:description" content="2-player tank duel. Set angle and power, watch the wind, FIRE."><meta name="twitter:image" content="https://mrchumley.github.io/artillery-test/preview3.png"><meta property="og:title" content="ARTILLERY"><meta property="og:description" content="2-player tank duel. Set angle and power, watch the wind, FIRE."><meta property="og:image" content="https://mrchumley.github.io/artillery-test/preview3.png"><meta property="og:url" content="https://mrchumley.github.io/artillery-test/"><title>ARTILLERY (test)</title><!-- build theme1 (superseded) --><script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script><style>  html,body{margin:0;height:100%;height:100dvh;background:#000;color:#6f6;font-family:"Courier New",monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;box-sizing:border-box;padding:max(6px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));-webkit-text-size-adjust:100%;}  h1{font-size:18px;letter-spacing:6px;margin:6px 0;font-weight:normal;}  .cheat-bang{border:0;background:transparent;color:#6f6;padding:0;margin:0;font:inherit;letter-spacing:0;cursor:default;opacity:.55;}  .cheat-bang:focus{outline:none;}  canvas{width:min(100%,640px);height:auto;aspect-ratio:320/200;outline:2px solid #3a3;outline-offset:0;background:#000;box-shadow:0 0 24px #040;image-rendering:pixelated;image-rendering:crisp-edges;flex:0 0 auto;touch-action:none;display:block;margin:2px;}
   .ui{display:flex;flex-direction:column;align-items:center;width:min(640px,100%);}  .row{margin:6px 0;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;}  input,select,button{background:#000;color:#6f6;border:1px solid #3a3;font-family:inherit;font-size:16px;padding:3px 6px;}  button{border-color:#6f6;cursor:pointer;} button:disabled{opacity:.4;cursor:default;}  input[type=number]{width:56px;} #room{width:140px;}  #msg,#net{min-height:18px;font-size:13px;text-align:center;} #net{opacity:.8;}  #wind{display:inline-block;min-width:4ch;text-align:right;font-variant-numeric:tabular-nums;}  .msgline{display:flex;align-items:baseline;justify-content:center;gap:0;}  .seed-dot{border:0;background:transparent;color:#6f6;padding:0;margin:0;font:inherit;font-size:13px;line-height:1;cursor:default;opacity:.7;}  .seed-dot:focus{outline:none;}  .step{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;}  .step input[type=number]{width:52px;text-align:center;font-size:16px;-moz-appearance:textfield;}  .step input[type=number]::-webkit-outer-spin-button,.step input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}  .nudge{width:52px;padding:4px 0;line-height:1;touch-action:manipulation;}  #splash,#flagpop{position:fixed;inset:0;z-index:5;background:#000;color:#6f6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;}  #flagpop{z-index:6;background:rgba(0,0,0,.94);}  #splash svg{position:absolute;right:0;bottom:0;width:50%;height:50%;pointer-events:none;}  #splash h1,#splash #startBtn{position:relative;z-index:1;}  #splash h1{font-size:28px;letter-spacing:8px;text-shadow:0 0 8px #000;}  #flagBtn{position:absolute;left:10px;bottom:10px;z-index:2;width:42px;height:42px;font-size:22px;padding:0;line-height:1;}  #splash.hidden,#flagpop.hidden{display:none;}  #flagbox{width:min(420px,92vw);max-height:86dvh;border:1px solid #3a3;padding:12px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;}  #qflag{width:100%;box-sizing:border-box;}  .seatline{display:flex;align-items:center;gap:8px;width:100%;text-align:left;}  .seatline.on{background:#032;}  #flaglist{flex:1 1 auto;min-height:160px;max-height:46dvh;overflow-y:scroll;-webkit-overflow-scrolling:touch;border:1px solid #3a3;}  #flaglist button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #163;background:#000;}  #flaglist button.on{background:#032;}
   /* ---- UI layout overrides ---- */
   body{gap:4px;}
@@ -379,6 +379,47 @@ function ScoreRunner(ctx,out,o){
   return R;
 }
 
+/* audio3: pre-rendered music. Each UNIQUE score segment (theme, fill, 5 hook variants, final+stomp) is rendered once
+   with OfflineAudioContext (off the main thread) into a mono AudioBuffer at the live context's sampleRate, then the
+   Fibonacci score is played as one AudioBufferSourceNode per segment, start(when) sample-accurate. Tails overlap and
+   sum exactly like the live synthesis did; the shared music bus/compressor stays live. Until a segment is rendered it
+   is synthesised live (same sound), so music can start immediately. */
+const MUSIC_BUFS={sr:0,b:{},busy:false,bytes:0,ms:0,done:false};
+const SEG_TAIL=1.5;
+function segKey(s){ return s.name==='hook'?(s.rep===0?'hook0':'hookq'+(s.rep%4)):s.name; }
+function segSpecs(){ const out={}; scoreSegments(6).concat(scoreSegments(0)).forEach(s=>{ const k=segKey(s); if(!out[k]) out[k]=s; }); return out; }
+function renderSeg(s,sr){ const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext; const len=Math.ceil((s.dur+SEG_TAIL)*sr); const oc=new OAC(1,len,sr);
+  s.play(oc,oc.destination,-s.start);
+  return new Promise((res,rej)=>{ let p; try{ oc.oncomplete=e=>res(e.renderedBuffer); p=oc.startRendering(); }catch(e){ rej(e); return; } if(p&&p.then) p.then(res,rej); }); }
+function musicPrerender(sr){
+  if(!(window.OfflineAudioContext||window.webkitOfflineAudioContext)) return;
+  if(MUSIC_BUFS.busy||(MUSIC_BUFS.done&&MUSIC_BUFS.sr===sr)) return;
+  if(MUSIC_BUFS.sr!==sr){ MUSIC_BUFS.sr=sr; MUSIC_BUFS.b={}; MUSIC_BUFS.bytes=0; MUSIC_BUFS.done=false; }
+  MUSIC_BUFS.busy=true; const specs=segSpecs(), order=['theme','fill','hook0','hookq1','hookq2','hookq3','hookq0','final+stomp'].filter(k=>specs[k]); const t0=performance.now();
+  (function next(i){ if(i>=order.length||MUSIC_BUFS.sr!==sr){ MUSIC_BUFS.busy=false; MUSIC_BUFS.done=i>=order.length; MUSIC_BUFS.ms=Math.round(performance.now()-t0); return; }
+    const k=order[i]; if(MUSIC_BUFS.b[k]){ next(i+1); return; }
+    renderSeg(specs[k],sr).then(buf=>{ if(MUSIC_BUFS.sr===sr){ MUSIC_BUFS.b[k]=buf; MUSIC_BUFS.bytes+=buf.length*4*buf.numberOfChannels; } setTimeout(()=>next(i+1),0); },()=>{ MUSIC_BUFS.busy=false; });
+  })(0);
+}
+/* same interface as ScoreRunner; 1 node per segment so a long lookahead is cheap and survives throttled timers */
+function BufferRunner(ctx,out,o){
+  o=o||{};const LA=o.lookahead||8,IV=(o.interval||.5)*1000;
+  const master=ctx.createGain();master.gain.value=1;master.connect(out);
+  let timer=null,step=0,queue=[],stepT0=0,running=false,cur=0;
+  function fill(){if(!queue.length){cur=step;queue=scoreSegments(step).map(s=>({s,t:stepT0}));stepT0+=scoreStepDuration(step);step=(step+1)%7;}}
+  const R={master,ctx,buffered:0,live:0,get running(){return running;},get stepIndex(){return cur;},
+    tick(now){
+      if(!running||ctx.state==='suspended'||ctx.state==='interrupted')return;
+      for(;;){fill();const q=queue[0],at=q.t+q.s.start;if(at>now+LA)break;queue.shift();
+        const buf=MUSIC_BUFS.sr===ctx.sampleRate?MUSIC_BUFS.b[segKey(q.s)]:null;
+        if(buf){ const off=now-at; if(off>=buf.duration-.05) continue; const src=ctx.createBufferSource(); src.buffer=buf; src.connect(master); src.onended=()=>{try{src.disconnect();}catch(e){}}; if(off>0) src.start(now,off); else src.start(at); R.buffered++; }
+        else { if(at<now-.5) continue; q.s.play(ctx,master,q.t); R.live++; }
+        if(o.onSeg)o.onSeg(q.s.name,at);}},
+    start(startStep){if(running)return;running=true;step=startStep||0;queue=[];stepT0=ctx.currentTime+.1;master.gain.cancelScheduledValues(ctx.currentTime);master.gain.setValueAtTime(1,ctx.currentTime);try{musicPrerender(ctx.sampleRate);}catch(e){}R.tick(ctx.currentTime);timer=setInterval(()=>R.tick(ctx.currentTime),IV);},
+    stop(fade){fade=fade==null?.4:fade;if(!running)return;running=false;clearInterval(timer);const t=ctx.currentTime;master.gain.cancelScheduledValues(t);master.gain.setValueAtTime(master.gain.value,t);master.gain.linearRampToValueAtTime(0,t+fade);setTimeout(()=>{try{master.disconnect()}catch(e){}},fade*1000+300);}
+  };
+  return R;
+}
 /*ENDSCORE*/
 /*THEMEHOOK*/
 (function(){
@@ -398,7 +439,7 @@ function ScoreRunner(ctx,out,o){
     if(!on||playing()||document.hidden)return;
     var c;try{c=audio();}catch(e){return;} if(!c)return;
     function ok(){starting=false;if(!on||playing()||document.hidden||c.state!=='running')return;
-      try{runner=ScoreRunner(c,getBus(c),{});runner.start(step||0);}catch(e){runner=null;}}
+      try{runner=(window.OfflineAudioContext||window.webkitOfflineAudioContext)?BufferRunner(c,getBus(c),{}):ScoreRunner(c,getBus(c),{});runner.start(step||0);}catch(e){runner=null;}}
     if(c.state==='running'){ok();return;}
     starting=true;setTimeout(function(){starting=false;},2000);try{var pr=c.resume();if(pr&&pr.then)pr.then(ok,function(){starting=false;});else starting=false;}catch(e){starting=false;}
   }
